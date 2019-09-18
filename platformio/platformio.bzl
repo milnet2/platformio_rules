@@ -61,6 +61,8 @@ _UPLOAD_COMMAND="platformio run -d {project_dir} -t upload"
 # Execution will upload the firmware to the Arduino device.
 _SHELL_HEADER="""#!/bin/bash"""
 
+# Locations to search for the PlatformIO and other binaries
+_SEARCH_PATH = "/bin:/usr/bin:/usr/local/bin:/usr/sbin:/sbin"
 
 def _platformio_library_impl(ctx):
   """Collects all transitive dependencies and emits the zip output.
@@ -251,6 +253,19 @@ def _platformio_project_impl(ctx):
   _emit_build_action(ctx, project_dir)
   _emit_executable_action(ctx)
 
+def _platformio_toolchain_impl(ctx):
+    """Tweaks locations for PlatformIO and related binaries.
+
+    Args:
+      ctx: The Skylark context.
+    """
+    _COPY_COMMAND = ctx.attr.copy_command
+    _ZIP_COMMAND = ctx.attr.zip_command
+    _UNZIP_COMMAND = ctx.attr.unzip_command
+    _BUILD_COMMAND = ctx.attr.build_command
+    _UPLOAD_COMMAND = ctx.attr.upload_command
+    _SHELL_HEADER = ctx.attr.shell_header
+    _SEARCH_PATH = ctx.attr.search_path
 
 platformio_library = rule(
   implementation=_platformio_library_impl,
@@ -419,5 +434,50 @@ project configuration file for PlatformIO and the firmware. The firmware_elf
 is the compiled version of the Arduino firmware for the specified board and
 the firmware_hex is the firmware in the hexadecimal format ready for
 uploading.
-"""
+""",
+)
+
+platformio_toolchain = rule(
+    implementation = _platformio_toolchain_impl,
+    attrs = {
+        "copy_command": attr.string(
+            default = _COPY_COMMAND,
+            doc = "Command that copies the source to the destination.",
+        ),
+        "zip_command": attr.string(
+            default = _ZIP_COMMAND,
+            doc = """
+Command that zips files recursively. It enters the output directory first so
+that the zipped path starts at lib/.""",
+        ),
+        "unzip_command": attr.string(
+            default = _UNZIP_COMMAND,
+            doc = "Command that unzips a zip archive into the specified directory.",
+        ),
+        "build_command": attr.string(
+            default = _BUILD_COMMAND,
+            doc = """
+Command that executes the PlatformIO build system and builds the project in
+the specified directory.""",
+        ),
+        "upload_command": attr.string(
+            default = _UPLOAD_COMMAND,
+            doc = """
+Command that executes the PlatformIO build system and uploads the compiled
+firmware to the device.""",
+        ),
+        "shell_header": attr.string(
+            default = _SHELL_HEADER,
+            doc = """
+Header used in the shell script that makes platformio_project executable.
+Execution will upload the firmware to the Arduino device.""",
+        ),
+        "search_path": attr.string(
+            default = _SEARCH_PATH,
+            doc = "Locations to search for the PlatformIO and other binaries",
+        ),
+    },
+    doc = """
+Optionally tweaks locations for PlatformIO and related binaries.
+""",
 )

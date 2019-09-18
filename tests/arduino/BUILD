@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//platformio:platformio.bzl", "platformio_library")
+load("//platformio:platformio.bzl", "platformio_library", "platformio_toolchain")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -30,6 +30,11 @@ cc_library(
         ":arduino_interface",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+platformio_toolchain(
+    search_path = "/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin",
+    shell_header = "#!/bin/bash\n# additional header",
 )
 
 platformio_library(
